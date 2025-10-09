@@ -1,26 +1,326 @@
-// App logic: populate, render, and play chords
-const NOTE_CLASSES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-function pcIndex(n){return NOTE_CLASSES.indexOf(n)}
-function getRagasByTradition(trad){ if(trad==='Both') return RAGAS; return RAGAS.filter(r=>r.tradition===trad); }
-function populateRagaSelect(){ const tradition=document.getElementById('tradition').value; const sel=document.getElementById('ragaSelect'); sel.innerHTML=''; getRagasByTradition(tradition).forEach(r=>{ const opt=document.createElement('option'); opt.value=r.id; opt.textContent=r.name+' ('+r.tradition+')'; sel.appendChild(opt); }); }
-function showRagaInfo(r){ const meta=document.getElementById('ragaMeta'); const pkd=document.getElementById('pakad'); meta.innerHTML=`<div class="badge">Tradition: ${r.tradition}</div><div class="badge">Vadi: ${r.vadi||'-'}</div><div class="badge">Samvadi: ${r.samvadi||'-'}</div><div class="badge">Pitch classes (C as Sa): ${r.pitchClassesC.join(', ')}</div>`; pkd.innerHTML=`<div class="badge">Pakad/Prayog: ${(Array.isArray(r.pakad)?r.pakad.join(' • '): (r.pakad||'-'))}</div>`; }
-function simpleChordCandidates(pcs){ const tri=[]; for(let i=0;i<pcs.length;i++){ const root=pcs[i]; const idx=pcIndex(root); const m3=NOTE_CLASSES[(idx+3)%12]; const M3=NOTE_CLASSES[(idx+4)%12]; const p5=NOTE_CLASSES[(idx+7)%12]; if(pcs.includes(M3)&&pcs.includes(p5)) tri.push({name:`${root} maj`,tones:[root,M3,p5]}); if(pcs.includes(m3)&&pcs.includes(p5)) tri.push({name:`${root} min`,tones:[root,m3,p5]}); } return tri.slice(0,18); }
-function renderChords(chords){ const grid=document.getElementById('chordsGrid'); grid.innerHTML=''; chords.forEach(ch=>{ const card=document.createElement('div'); card.className='chord-card'; card.innerHTML=`<strong>${ch.name}</strong><div class="badge">${ch.tones.join(' - ')}</div>`; card.addEventListener('click',()=>{ const c4=261.63; const freqs=ch.tones.map(t=>{ const semis=pcIndex(t)-pcIndex('C'); return c4*Math.pow(2, semis/12); }); if(typeof playChordFreqs==='function') playChordFreqs(freqs); }); grid.appendChild(card); }); }
-function renderPhrases(r){ const el=document.getElementById('phrasesList'); const items=Array.isArray(r.pakad)?r.pakad:[r.pakad||'-']; el.innerHTML=items.map(p=>`<div class="badge">${p}</div>`).join(''); }
-function initApp(){ populateRagaSelect(); const sel=document.getElementById('ragaSelect'); const r=(RAGAS.find(x=>x.id===sel.value)) || getRagasByTradition('Both')[0]; if(r){ showRagaInfo(r); renderChords(simpleChordCandidates(r.pitchClassesC)); renderPhrases(r); }
-  document.getElementById('tradition').addEventListener('change',()=>{ populateRagaSelect(); const rr=RAGAS.find(x=>x.id===document.getElementById('ragaSelect').value); if(rr){ showRagaInfo(rr); renderChords(simpleChordCandidates(rr.pitchClassesC)); renderPhrases(rr); } });
-  document.getElementById('ragaSelect').addEventListener('change',e=>{ const rr=RAGAS.find(x=>x.id===e.target.value); if(rr){ showRagaInfo(rr); renderChords(simpleChordCandidates(rr.pitchClassesC)); renderPhrases(rr); } });
-  document.getElementById('generateBtn').addEventListener('click',()=>{ const rr=RAGAS.find(x=>x.id===document.getElementById('ragaSelect').value); if(rr) renderChords(simpleChordCandidates(rr.pitchClassesC));});
-  document.getElementById('playDroneBtn').addEventListener('click',()=>{ const on=toggleDrone('C'); document.getElementById('playDroneBtn').textContent=on?'Stop Drone':'Play/Stop Drone'; }); }
+// Main application logic
 
-document.addEventListener('DOMContentLoaded', initApp);
+let currentTradition = "hindustani";
+let currentRaga = null;
+let currentTonic = "C";
+let currentChords = [];
+let currentFilter = "all";
+let fusionMode = false;
+let mustIncludeSa = true;
+let droneEnabled = true;
 
-/* === Google Identity Services (non-breaking) === */
-function decodeJwtPayload(jwt){try{const b=jwt.split('.')[1];const s=b.replace(/-/g,'+').replace(/_/g,'/');const j=decodeURIComponent(atob(s).split('').map(c=>'%' + ('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));return JSON.parse(j);}catch(e){console.error('JWT decode error',e);return null;}}
-function handleGoogleCredential(resp){const p=decodeJwtPayload(resp.credential); if(!p) return; const user={sub:p.sub,name:p.name,email:p.email,picture:p.picture}; try{localStorage.setItem('rce_user',JSON.stringify(user));}catch{} applyLoggedInUI(user);} 
-function applyLoggedInUI(user){ const userInfo=document.getElementById('userInfo'); const signInBtn=document.getElementById('googleSignInBtn'); const avatar=document.getElementById('userAvatar'); const nameEl=document.getElementById('userName'); if(user){ if(avatar) avatar.src=user.picture||''; if(nameEl) nameEl.textContent=user.name||''; if(userInfo) userInfo.style.display='flex'; if(signInBtn) signInBtn.style.display='none'; document.body.classList.add('logged-in'); } else { if(userInfo) userInfo.style.display='none'; if(signInBtn) signInBtn.style.display=''; document.body.classList.remove('logged-in'); } }
-function initGoogleAuth(){ const meta=document.querySelector('meta[name="google-signin-client_id"]'); const clientId=meta&&meta.getAttribute('content'); if(!clientId || !(window.google&&google.accounts&&google.accounts.id)){ setTimeout(initGoogleAuth,300); return; } google.accounts.id.initialize({client_id:clientId,callback:handleGoogleCredential,auto_select:false,context:'signin',ux_mode:'popup'}); const btn=document.getElementById('googleSignInBtn'); if(btn){ google.accounts.id.renderButton(btn,{theme:'outline',size:'large',shape:'pill',text:'signin_with',logo_alignment:'left'}); } }
-function signOut(){ try{localStorage.removeItem('rce_user');}catch{} if(window.google&&google.accounts&&google.accounts.id){ google.accounts.id.disableAutoSelect(); } applyLoggedInUI(null); }
+// Tag labels with icons
+const TAG_LABELS = {
+    strong: '✅ Strong',
+    drone: '🎶 Drone',
+    color: '✨ Color',
+    fusion: '🎸 Fusion'
+};
 
-document.addEventListener('DOMContentLoaded',()=>{ try{ const saved=localStorage.getItem('rce_user'); if(saved) applyLoggedInUI(JSON.parse(saved)); else applyLoggedInUI(null); }catch{ applyLoggedInUI(null); } const b=document.getElementById('signOutBtn'); if(b) b.addEventListener('click', signOut); initGoogleAuth(); });
-/* === End GIS === */
+// Initialize app
+document.addEventListener('DOMContentLoaded', () => {
+    setupEventListeners();
+    populateRagaSelect();
+    audioEngine.init();
+});
+
+function setupEventListeners() {
+    // Tradition toggle
+    document.querySelectorAll('[data-tradition]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('[data-tradition]').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            currentTradition = e.target.dataset.tradition;
+            populateRagaSelect();
+            // Clear current raga when switching traditions
+            document.getElementById('raga-select').value = '';
+            document.getElementById('raga-info').style.display = 'none';
+            document.getElementById('chords-grid').innerHTML = '<div class="empty-state"><p>Select a raga to see available chords</p></div>';
+        });
+    });
+
+    // Raga select
+    document.getElementById('raga-select').addEventListener('change', (e) => {
+        const ragaId = e.target.value;
+        if (ragaId) {
+            currentRaga = RAGAS.find(r => r.id === ragaId);
+            displayRagaInfo();
+            generateChords();
+            displayPhrases();
+            if (droneEnabled) {
+                audioEngine.startDrone(currentRaga.typicalDrone);
+            }
+        } else {
+            document.getElementById('raga-info').style.display = 'none';
+            document.getElementById('chords-grid').innerHTML = '<div class="empty-state"><p>Select a raga to see available chords</p></div>';
+        }
+    });
+
+    // Tonic select
+    document.getElementById('tonic-select').addEventListener('change', (e) => {
+        currentTonic = e.target.value;
+        audioEngine.setTonic(currentTonic);
+        if (currentRaga) {
+            generateChords();
+        }
+    });
+
+    // Options
+    document.getElementById('fusion-mode').addEventListener('change', (e) => {
+        fusionMode = e.target.checked;
+        if (currentRaga) generateChords();
+    });
+
+    document.getElementById('must-include-sa').addEventListener('change', (e) => {
+        mustIncludeSa = e.target.checked;
+        if (currentRaga) generateChords();
+    });
+
+    document.getElementById('drone-enabled').addEventListener('change', (e) => {
+        droneEnabled = e.target.checked;
+        audioEngine.setDroneEnabled(droneEnabled);
+    });
+
+    // Tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const tabName = e.target.dataset.tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            e.target.classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        });
+    });
+
+    // Filters
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            currentFilter = e.target.dataset.filter;
+            displayChords();
+        });
+    });
+}
+
+function populateRagaSelect() {
+    const select = document.getElementById('raga-select');
+    select.innerHTML = '<option value="">Choose a raga...</option>';
+
+    const filteredRagas = RAGAS.filter(r => r.tradition === currentTradition);
+
+    filteredRagas.forEach(raga => {
+        const option = document.createElement('option');
+        option.value = raga.id;
+        option.textContent = raga.name;
+        select.appendChild(option);
+    });
+}
+
+function displayRagaInfo() {
+    if (!currentRaga) return;
+
+    document.getElementById('raga-info').style.display = 'block';
+    document.getElementById('raga-name').textContent = currentRaga.name;
+    document.getElementById('raga-parent').textContent = currentRaga.parent || 'N/A';
+
+    // Display aroha and avaroha
+    const arohaNames = currentRaga.arohaPCs.map(pc => PC_TO_SARGAM[pc]).join(' ');
+    const avarohaNames = currentRaga.avarohaPCs.map(pc => PC_TO_SARGAM[pc]).join(' ');
+    document.getElementById('raga-aroha').textContent = arohaNames;
+    document.getElementById('raga-avaroha').textContent = avarohaNames;
+
+    document.getElementById('raga-vadi').textContent = currentRaga.vadiPC !== null ? PC_TO_SARGAM[currentRaga.vadiPC] : 'N/A';
+    document.getElementById('raga-samvadi').textContent = currentRaga.samvadiPC !== null ? PC_TO_SARGAM[currentRaga.samvadiPC] : 'N/A';
+    document.getElementById('raga-drone').textContent = currentRaga.typicalDrone;
+    document.getElementById('raga-notes').textContent = currentRaga.notes;
+}
+
+function generateChords() {
+    if (!currentRaga) return;
+
+    const allowedPCs = new Set([...currentRaga.arohaPCs, ...currentRaga.avarohaPCs]);
+    const roots = Array.from(allowedPCs);
+
+    currentChords = [];
+
+    roots.forEach(root => {
+        CHORD_TEMPLATES.forEach(template => {
+            // Skip fusion chords if fusion mode is off
+            if (template.tags.includes('fusion') && !fusionMode) return;
+
+            // Check if all chord tones are in allowed set
+            const chordTones = template.intervals.map(iv => (root + iv) % 12);
+            const isValid = chordTones.every(tone => allowedPCs.has(tone));
+
+            if (isValid) {
+                // Skip if must include Sa and doesn't
+                if (mustIncludeSa && !chordTones.includes(0)) return;
+
+                const score = scoreChord(chordTones);
+                const tags = getChordTags(chordTones, template.tags);
+
+                currentChords.push({
+                    root,
+                    rootName: getNoteName(root),
+                    name: template.name,
+                    fullName: `${getNoteName(root)}${template.name}`,
+                    tones: chordTones,
+                    score,
+                    tags
+                });
+            }
+        });
+    });
+
+    // Sort by score
+    currentChords.sort((a, b) => b.score - a.score);
+
+    displayChords();
+}
+
+function scoreChord(tones) {
+    let score = 1;
+    const toneSet = new Set(tones);
+
+    // Includes Sa
+    if (toneSet.has(0)) {
+        score += 2;
+    } else {
+        score -= 1;
+    }
+
+    // Includes Vadi
+    if (currentRaga.vadiPC !== null && toneSet.has(currentRaga.vadiPC)) {
+        score += 1;
+    }
+
+    // Includes Samvadi
+    if (currentRaga.samvadiPC !== null && toneSet.has(currentRaga.samvadiPC)) {
+        score += 1;
+    }
+
+    // Both Vadi and Samvadi
+    if (currentRaga.vadiPC !== null && currentRaga.samvadiPC !== null &&
+        toneSet.has(currentRaga.vadiPC) && toneSet.has(currentRaga.samvadiPC)) {
+        score += 1;
+    }
+
+    // Drone compatibility
+    if (currentRaga.typicalDrone === "Sa-Pa") {
+        if (toneSet.has(0) || toneSet.has(7)) score += 1;
+    } else if (currentRaga.typicalDrone === "Sa-Ma") {
+        if (toneSet.has(0) || toneSet.has(5) || toneSet.has(6)) score += 1;
+    }
+
+    return score;
+}
+
+function getChordTags(tones, templateTags) {
+    const tags = [...templateTags];
+    const toneSet = new Set(tones);
+
+    // Strong: contains Sa + (Vadi or Samvadi)
+    if (toneSet.has(0) && (
+        (currentRaga.vadiPC !== null && toneSet.has(currentRaga.vadiPC)) ||
+        (currentRaga.samvadiPC !== null && toneSet.has(currentRaga.samvadiPC))
+    )) {
+        tags.push('strong');
+    }
+
+    // Drone-compatible
+    if (currentRaga.typicalDrone === "Sa-Pa" && (toneSet.has(0) || toneSet.has(7))) {
+        tags.push('drone');
+    } else if (currentRaga.typicalDrone === "Sa-Ma" && (toneSet.has(0) || toneSet.has(5) || toneSet.has(6))) {
+        tags.push('drone');
+    }
+
+    return tags;
+}
+
+function displayChords() {
+    const grid = document.getElementById('chords-grid');
+
+    // Filter chords
+    let filteredChords = currentChords;
+    if (currentFilter !== 'all') {
+        filteredChords = currentChords.filter(chord => chord.tags.includes(currentFilter));
+    }
+
+    if (filteredChords.length === 0) {
+        grid.innerHTML = '<div class="empty-state"><p>No chords match the current filter</p></div>';
+        return;
+    }
+
+    grid.innerHTML = '';
+
+    filteredChords.forEach(chord => {
+        const card = document.createElement('div');
+        card.className = 'chord-card';
+
+        const notesStr = chord.tones.map(pc => getNoteName(pc)).join(' ');
+        const sargamStr = chord.tones.map(pc => PC_TO_SARGAM[pc]).join(' ');
+
+        const tagsHTML = chord.tags.map(tag => 
+            `<span class="tag ${tag}">${TAG_LABELS[tag] || tag}</span>`
+        ).join('');
+
+        card.innerHTML = `
+            <div class="pulse"></div>
+            <div class="chord-header">
+                <div class="chord-name">${chord.fullName}</div>
+            </div>
+            <div class="chord-notes">${notesStr}</div>
+            <div class="chord-sargam">${sargamStr}</div>
+            <div class="chord-tags">${tagsHTML}</div>
+        `;
+
+        card.addEventListener('click', async () => {
+            // Remove playing class from all cards
+            document.querySelectorAll('.chord-card').forEach(c => c.classList.remove('playing'));
+
+            card.classList.add('playing');
+            await audioEngine.playChord(chord.tones);
+
+            // Keep the playing state for a bit longer
+            setTimeout(() => {
+                card.classList.remove('playing');
+            }, 300);
+        });
+
+        grid.appendChild(card);
+    });
+}
+
+function displayPhrases() {
+    const content = document.getElementById('phrases-content');
+
+    if (!currentRaga || !currentRaga.pakadPCs || currentRaga.pakadPCs.length === 0) {
+        content.innerHTML = '<div class="empty-state"><p>No characteristic phrases available for this raga</p></div>';
+        return;
+    }
+
+    content.innerHTML = '';
+
+    currentRaga.pakadPCs.forEach((phrase, index) => {
+        const phraseDiv = document.createElement('div');
+        phraseDiv.className = 'phrase-item';
+
+        const sargamStr = phrase.map(pc => PC_TO_SARGAM[pc]).join(' ');
+        const notesStr = phrase.map(pc => getNoteName(pc)).join(' ');
+
+        phraseDiv.innerHTML = `
+            <div class="phrase-label">Pakad/Chalan ${index + 1}</div>
+            <div class="phrase-notes">${sargamStr}</div>
+            <div class="chord-notes" style="margin-top: 8px;">${notesStr}</div>
+        `;
+
+        content.appendChild(phraseDiv);
+    });
+}
+
+function getNoteName(pc) {
+    const tonicIndex = NOTE_NAMES.indexOf(currentTonic);
+    const noteIndex = (tonicIndex + pc) % 12;
+    return NOTE_NAMES[noteIndex];
+}
