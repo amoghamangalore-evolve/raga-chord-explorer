@@ -11,46 +11,20 @@
 
   <!-- Styles -->
   <link rel="stylesheet" href="styles.css" />
-
-  <!-- Auth bar styles kept minimal and harmonious with the dark theme -->
   <style>
-    .auth-bar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-left: auto;
-      padding-left: 12px;
-    }
-    .auth-user {
-      display: none;
-      align-items: center;
-      gap: 8px;
-      padding: 4px 8px;
-      border: 1px solid #1f2736;
-      background: rgba(255,255,255,0.03);
-      border-radius: 10px;
-    }
-    .auth-user img {
-      width: 28px; height: 28px; border-radius: 50%; object-fit: cover;
-    }
-    .auth-user-name {
-      font-size: 14px; color: #dfe7ff;
-      max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .btn-ghost {
-      padding: 6px 10px; border-radius: 8px;
-      border: 1px solid #2a3347; background: #11151f; color: #e8eeff; cursor: pointer;
-    }
-    .btn-ghost:hover { background: #151b27; }
-    body.logged-in #googleSignInBtn { display: none !important; }
-    body:not(.logged-in) #userInfo { display: none !important; }
+    .auth-bar { display:flex; align-items:center; gap:12px; margin-left:auto; padding-left:12px; }
+    .auth-user { display:none; align-items:center; gap:8px; padding:4px 8px; border:1px solid #1f2736; background:rgba(255,255,255,0.03); border-radius:10px; }
+    .auth-user img { width:28px; height:28px; border-radius:50%; object-fit:cover; }
+    .auth-user-name { font-size:14px; color:#dfe7ff; max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .btn-ghost { padding:6px 10px; border-radius:8px; border:1px solid #2a3347; background:#11151f; color:#e8eeff; cursor:pointer; }
+    .btn-ghost:hover { background:#151b27; }
+    body.logged-in #googleSignInBtn { display:none !important; }
+    body:not(.logged-in) #userInfo { display:none !important; }
   </style>
 </head>
 <body>
   <header class="app-header" style="display:flex; align-items:center; gap:16px;">
     <h1 class="app-title">Raga Chord Explorer</h1>
-
-    <!-- Auth bar: right-aligned, clean -->
     <div class="auth-bar">
       <div id="googleSignInBtn"></div>
       <div id="userInfo" class="auth-user">
@@ -62,7 +36,6 @@
   </header>
 
   <main id="app">
-    <!-- Controls -->
     <section id="controls" class="controls">
       <div class="row">
         <label for="tradition">Tradition</label>
@@ -93,27 +66,23 @@
       </div>
     </section>
 
-    <!-- Raga info -->
     <section id="ragaInfo" class="card">
       <h2>Raga Info</h2>
       <div id="ragaMeta"></div>
       <div id="pakad"></div>
     </section>
 
-    <!-- Chords -->
     <section id="chordResults" class="card">
       <h2>Chord Palette</h2>
       <div id="chordsGrid" class="grid"></div>
     </section>
 
-    <!-- Characteristic phrases -->
     <section id="phrases" class="card">
       <h2>Characteristic Phrases</h2>
       <div id="phrasesList"></div>
     </section>
   </main>
 
-  <!-- Script order -->
   <script src="ragas.js"></script>
   <script src="audio.js"></script>
   <script src="app.js"></script>
