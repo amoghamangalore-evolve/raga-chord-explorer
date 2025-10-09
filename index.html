@@ -9,36 +9,111 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <meta name="google-signin-client_id" content="749437295465-577ue771bajiclpo84usan5v7ifefpuc.apps.googleusercontent.com">
 
+  <!-- Styles -->
   <link rel="stylesheet" href="styles.css" />
+
+  <!-- Auth bar styles kept minimal and harmonious with the dark theme -->
   <style>
-    .auth-area { display:flex; align-items:center; gap:10px; }
-    #userAvatar { width:28px; height:28px; border-radius:50%; object-fit:cover; }
-    .btn { padding:6px 10px; border-radius:8px; border:1px solid #444; background:#1b1b1b; color:#eee; cursor:pointer; }
-    .btn:hover { background:#222; }
-    body.logged-in #googleSignInBtn { display:none; }
-    body:not(.logged-in) #userInfo { display:none; }
+    .auth-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-left: auto;
+      padding-left: 12px;
+    }
+    .auth-user {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 8px;
+      border: 1px solid #1f2736;
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+    }
+    .auth-user img {
+      width: 28px; height: 28px; border-radius: 50%; object-fit: cover;
+    }
+    .auth-user-name {
+      font-size: 14px; color: #dfe7ff;
+      max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .btn-ghost {
+      padding: 6px 10px; border-radius: 8px;
+      border: 1px solid #2a3347; background: #11151f; color: #e8eeff; cursor: pointer;
+    }
+    .btn-ghost:hover { background: #151b27; }
+    body.logged-in #googleSignInBtn { display: none !important; }
+    body:not(.logged-in) #userInfo { display: none !important; }
   </style>
 </head>
 <body>
-  <header class="app-header">
-    <h1>Raga Chord Explorer</h1>
-    <div id="authArea" class="auth-area">
+  <header class="app-header" style="display:flex; align-items:center; gap:16px;">
+    <h1 class="app-title">Raga Chord Explorer</h1>
+
+    <!-- Auth bar: right-aligned, clean -->
+    <div class="auth-bar">
       <div id="googleSignInBtn"></div>
-      <div id="userInfo" class="user-info">
+      <div id="userInfo" class="auth-user">
         <img id="userAvatar" alt="avatar" />
-        <span id="userName"></span>
-        <button id="signOutBtn" type="button" class="btn">Sign out</button>
+        <span id="userName" class="auth-user-name"></span>
+        <button id="signOutBtn" type="button" class="btn-ghost">Sign out</button>
       </div>
     </div>
   </header>
 
   <main id="app">
-    <div id="controls" class="controls"></div>
-    <section id="ragaInfo"></section>
-    <section id="chordResults"></section>
-    <section id="phrases"></section>
+    <!-- Controls -->
+    <section id="controls" class="controls">
+      <div class="row">
+        <label for="tradition">Tradition</label>
+        <select id="tradition">
+          <option value="Hindustani">Hindustani</option>
+          <option value="Carnatic">Carnatic</option>
+          <option value="Both" selected>Both</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="tonic">Tonic (Sa)</label>
+        <select id="tonic">
+          <option>C</option><option>C#</option><option>Db</option>
+          <option>D</option><option>D#</option><option>Eb</option>
+          <option>E</option><option>F</option><option>F#</option>
+          <option>Gb</option><option>G</option><option>G#</option>
+          <option>Ab</option><option>A</option><option>A#</option>
+          <option>Bb</option><option>B</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="ragaSelect">Raga</label>
+        <select id="ragaSelect"></select>
+      </div>
+      <div class="row">
+        <button id="generateBtn" class="btn-primary">Generate Chords</button>
+        <button id="playDroneBtn" class="btn-secondary">Play/Stop Drone</button>
+      </div>
+    </section>
+
+    <!-- Raga info -->
+    <section id="ragaInfo" class="card">
+      <h2>Raga Info</h2>
+      <div id="ragaMeta"></div>
+      <div id="pakad"></div>
+    </section>
+
+    <!-- Chords -->
+    <section id="chordResults" class="card">
+      <h2>Chord Palette</h2>
+      <div id="chordsGrid" class="grid"></div>
+    </section>
+
+    <!-- Characteristic phrases -->
+    <section id="phrases" class="card">
+      <h2>Characteristic Phrases</h2>
+      <div id="phrasesList"></div>
+    </section>
   </main>
 
+  <!-- Script order -->
   <script src="ragas.js"></script>
   <script src="audio.js"></script>
   <script src="app.js"></script>
