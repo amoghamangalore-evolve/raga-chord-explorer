@@ -101,6 +101,47 @@ function setupEventListeners() {
             displayChords();
         });
     });
+
+    // Metronome controls
+    const tempoSlider = document.getElementById('tempo-slider');
+    const tempoDisplay = document.getElementById('tempo-display');
+    const startBtn = document.getElementById('metronome-start');
+    const stopBtn = document.getElementById('metronome-stop');
+    const beatIndicator = document.getElementById('beat-indicator');
+
+    tempoSlider.addEventListener('input', (e) => {
+        tempoDisplay.textContent = e.target.value;
+    });
+
+    startBtn.addEventListener('click', () => {
+        const tempo = parseInt(tempoSlider.value);
+        audioEngine.startMetronome(tempo);
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        beatIndicator.classList.add('active');
+    });
+
+    stopBtn.addEventListener('click', () => {
+        audioEngine.stopMetronome();
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        beatIndicator.classList.remove('active');
+        beatIndicator.classList.remove('accent');
+    });
+
+    // Listen for beat events
+    window.addEventListener('metronomeBeat', (e) => {
+        if (e.detail.accent) {
+            beatIndicator.classList.add('accent');
+        } else {
+            beatIndicator.classList.remove('accent');
+        }
+
+        // Flash animation
+        beatIndicator.classList.remove('beat-flash');
+        void beatIndicator.offsetWidth; // Force reflow
+        beatIndicator.classList.add('beat-flash');
+    });
 }
 
 function populateRagaSelect() {

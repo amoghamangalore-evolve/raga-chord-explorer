@@ -7,6 +7,8 @@ const audioEngine = (() => {
   let tonic = 'C';
   let droneOn = true;
   let droneNodes = [];
+  let metronomeInterval = null;
+  let metronomeTempo = 120;
 
   const A4 = 440;
   const NOTE_TO_INDEX = { 'C':0,'C#':1,'D':2,'D#':3,'E':4,'F':5,'F#':6,'G':7,'G#':8,'A':9,'A#':10,'B':11 };
@@ -119,5 +121,60 @@ const audioEngine = (() => {
     droneNodes = [];
   }
 
-  return { init, setTonic, startDrone, setDroneEnabled, playChord };
+  function playMetronomeClick(accent = false){
+    if (!ctx) return;
+    resume();
+
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    g.connect(masterGain);
+    osc.connect(g);
+
+    // Accent: higher pitch and louder, regular: lower pitch
+    osc.type = 'sine';
+    osc.frequency.value = accent ? 1200 : 800;
+
+    const now = ctx.currentTime;
+    const duration = 0.05;
+    g.gain.setValueAtTime(accent ? 0.3 : 0.2, now);
+    g.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+    osc.start(now);
+    osc.stop(now + duration);
+  }
+
+  function startMetronome(tempo){
+    if (!ctx) return;
+    stopMetronome();
+
+    metronomeTempo = tempo;
+    const interval = 60000 / tempo; // milliseconds per beat
+    let beatCount = 0;
+
+    // Play first click immediately
+    playMetronomeClick(true);
+    beatCount++;
+
+    metronomeInterval = setInterval(() => {
+      const accent = (beatCount % 4 === 0); // Accent every 4th beat
+      playMetronomeClick(accent);
+      beatCount++;
+
+      // Dispatch custom event for visual indicator
+      window.dispatchEvent(new CustomEvent('metronomeBeat', { detail: { accent } }));
+    }, interval);
+  }
+
+  function stopMetronome(){
+    if (metronomeInterval) {
+      clearInterval(metronomeInterval);
+      metronomeInterval = null;
+    }
+  }
+
+  function isMetronomePlaying(){
+    return metronomeInterval !== null;
+  }
+
+  return { init, setTonic, startDrone, setDroneEnabled, playChord, startMetronome, stopMetronome, isMetronomePlaying };
 })();

@@ -102,6 +102,7 @@
         <div class="tabs">
             <button class="tab-btn active" data-tab="chords">Chords</button>
             <button class="tab-btn" data-tab="phrases">Phrases</button>
+            <button class="tab-btn" data-tab="metronome">Metronome</button>
             <button class="tab-btn" data-tab="about">About</button>
         </div>
 
@@ -123,6 +124,30 @@
             <div id="phrases-content">
                 <div class="empty-state">
                     <p>Select a raga to see characteristic phrases (pakad/chalan)</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="metronome-tab">
+            <div class="metronome-container">
+                <div class="metronome-display">
+                    <div class="tempo-value" id="tempo-display">120</div>
+                    <div class="tempo-label">BPM</div>
+                </div>
+                <div class="metronome-controls">
+                    <input type="range" id="tempo-slider" min="100" max="160" value="120" class="tempo-slider">
+                    <div class="tempo-markers">
+                        <span>100</span>
+                        <span>130</span>
+                        <span>160</span>
+                    </div>
+                </div>
+                <div class="metronome-buttons">
+                    <button id="metronome-start" class="btn-metronome btn-start">Start</button>
+                    <button id="metronome-stop" class="btn-metronome btn-stop" disabled>Stop</button>
+                </div>
+                <div class="beat-indicator" id="beat-indicator">
+                    <div class="beat-dot"></div>
                 </div>
             </div>
         </div>
