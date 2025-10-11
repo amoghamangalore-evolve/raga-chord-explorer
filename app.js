@@ -310,11 +310,30 @@ function displayChords() {
             <div class="pulse"></div>
             <div class="chord-header">
                 <div class="chord-name">${chord.fullName}</div>
+                <button class="btn-download-midi" title="Download MIDI">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 12L3 7h3V1h4v6h3L8 12z"/>
+                        <path d="M1 14h14v2H1v-2z"/>
+                    </svg>
+                </button>
             </div>
             <div class="chord-notes">${notesStr}</div>
             <div class="chord-sargam">${sargamStr}</div>
             <div class="chord-tags">${tagsHTML}</div>
         `;
+
+        // Download MIDI button
+        const downloadBtn = card.querySelector('.btn-download-midi');
+        downloadBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent card click
+            midiGenerator.downloadMidi(chord.tones, currentTonic, chord.fullName);
+
+            // Visual feedback
+            downloadBtn.classList.add('downloading');
+            setTimeout(() => {
+                downloadBtn.classList.remove('downloading');
+            }, 600);
+        });
 
         card.addEventListener('click', async () => {
             // Remove playing class from all cards

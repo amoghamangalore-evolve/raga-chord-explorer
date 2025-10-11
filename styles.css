@@ -320,18 +320,49 @@ h1{
   transform:scale(1); 
 }
 
-.chord-header{ 
-  display:flex; 
-  align-items:baseline; 
-  justify-content:space-between; 
-  gap:8px; 
+.chord-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
   margin-bottom: 12px;
 }
-.chord-name{ 
-  font-size:1.4rem; 
-  font-weight:800; 
-  letter-spacing:-0.01em; 
+.chord-name{
+  font-size:1.4rem;
+  font-weight:800;
+  letter-spacing:-0.01em;
   color: var(--text);
+  flex: 1;
+}
+.btn-download-midi {
+  background: linear-gradient(180deg, var(--glass-2), var(--glass));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.btn-download-midi:hover {
+  background: linear-gradient(180deg, var(--brand-2)33, var(--brand-2)22);
+  border-color: var(--brand-2);
+  color: var(--brand-2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(34, 211, 238, 0.3);
+}
+.btn-download-midi.downloading {
+  animation: downloadPulse 0.6s ease;
+  background: linear-gradient(180deg, var(--success)44, var(--success)33);
+  border-color: var(--success);
+  color: var(--success);
+}
+@keyframes downloadPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
 }
 .chord-notes{ 
   color:var(--text-dim); 
