@@ -1,7 +1,6 @@
 [build]
   base = "raga-chord-nextjs"
-  command = "npm install && npm run build"
-  publish = ".next"
+  command = "npm run build"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
