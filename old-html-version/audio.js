@@ -15,19 +15,28 @@ const audioEngine = (() => {
 
   function init(){
     if (!ctx) {
-      ctx = new (window.AudioContext || window.webkitAudioContext)();
-      masterGain = ctx.createGain();
-      masterGain.gain.value = 0.6;
-      masterGain.connect(ctx.destination);
-      setTonic(tonic);
+      try {
+        ctx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = ctx.createGain();
+        masterGain.gain.value = 0.6;
+        masterGain.connect(ctx.destination);
+        setTonic(tonic);
+        console.log('Audio engine initialized successfully');
+      } catch(e) {
+        console.error('Failed to initialize audio context:', e);
+      }
     }
     // resume on user gesture
-    window.addEventListener('click', resume, { once: true });
-    window.addEventListener('touchstart', resume, { once: true });
+    document.addEventListener('click', resume);
+    document.addEventListener('touchstart', resume);
   }
 
   function resume(){
-    if (ctx && ctx.state === 'suspended') ctx.resume();
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume().then(() => {
+        console.log('Audio context resumed');
+      });
+    }
   }
 
   function setTonic(note){
@@ -81,8 +90,12 @@ const audioEngine = (() => {
   }
 
   async function playChord(pcs){
-    if (!ctx) return;
-    resume();
+    if (!ctx) {
+      console.warn('Audio context not initialized');
+      return;
+    }
+    await resume();
+    console.log('Playing chord:', pcs);
     // play slight stagger for clarity
     const baseGain = 0.22;
     pcs.forEach((pc, i) => {
@@ -176,5 +189,32 @@ const audioEngine = (() => {
     return metronomeInterval !== null;
   }
 
-  return { init, setTonic, startDrone, setDroneEnabled, playChord, startMetronome, stopMetronome, isMetronomePlaying };
+  function playNote(pc, duration = 0.6){
+    playTone(pc, duration, 0.3);
+  }
+
+  function setMasterVolume(volume){
+    if (masterGain) {
+      masterGain.gain.value = volume * 0.6;
+    }
+  }
+
+  function setDroneVolume(volume){
+    // For now, just log it - would need to store drone gain nodes separately
+    console.log('Drone volume set to:', volume);
+  }
+
+  return {
+    init,
+    setTonic,
+    startDrone,
+    setDroneEnabled,
+    playChord,
+    playNote,
+    setMasterVolume,
+    setDroneVolume,
+    startMetronome,
+    stopMetronome,
+    isMetronomePlaying
+  };
 })();

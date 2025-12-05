@@ -1,0 +1,75 @@
+═══════════════════════════════════════════════════════════
+   🎵  HOW TO ACCESS YOUR RAGA CHORD EXPLORER  🎵
+═══════════════════════════════════════════════════════════
+
+YOUR APP IS RUNNING! 🎉
+
+The server is active at: http://localhost:3000
+
+═══════════════════════════════════════════════════════════
+   EASIEST WAY TO OPEN IN SAFARI:
+═══════════════════════════════════════════════════════════
+
+1. Open Safari
+2. Click in the address bar (top of window)
+3. Type: localhost:3000
+4. Press Enter
+
+That's it! The app will load.
+
+═══════════════════════════════════════════════════════════
+   IF THAT DOESN'T WORK:
+═══════════════════════════════════════════════════════════
+
+Try typing: 127.0.0.1:3000
+
+(This is the numeric version of localhost)
+
+═══════════════════════════════════════════════════════════
+   FIX SAFARI SECURITY (ONE-TIME SETUP):
+═══════════════════════════════════════════════════════════
+
+1. Open Safari
+2. Safari menu → Settings → Advanced
+3. Check: "Show features for web developers"
+4. Develop menu → Disable Local File Restrictions
+5. Visit: localhost:3000
+
+═══════════════════════════════════════════════════════════
+   TO STOP THE SERVER:
+═══════════════════════════════════════════════════════════
+
+Press: Ctrl + C in the Terminal window
+
+═══════════════════════════════════════════════════════════
+   TROUBLESHOOTING:
+═══════════════════════════════════════════════════════════
+
+Problem: "Safari Can't Open the Page"
+Solution: Type just "localhost:3000" without "http://"
+
+Problem: "Connection Refused"
+Solution: Make sure START_APP.command is still running
+
+Problem: Page is blank
+Solution: Wait 10 seconds and refresh (Cmd+R)
+
+═══════════════════════════════════════════════════════════
+   FEATURES TO TRY:
+═══════════════════════════════════════════════════════════
+
+✓ Select Hindustani or Carnatic tradition
+✓ Choose a raga (like Yaman or Mohanam)
+✓ Set your root note (Sa)
+✓ Click the virtual keyboard keys to play notes
+✓ Click chord cards to hear chords
+✓ Build chord progressions
+✓ Open the Metronome
+✓ Explore color and fusion chords
+
+═══════════════════════════════════════════════════════════
+
+Need help? The terminal window shows the server status.
+If you see "Ready" or "compiled successfully", you're good!
+
+🎵 Enjoy exploring ragas and chords! 🎵
